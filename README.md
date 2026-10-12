@@ -51,7 +51,7 @@ Useful contributions include explicit unit configuration, stationary-window dete
 
 ## License
 
-No source-code license has been assigned in this publication candidate. Public visibility alone does not grant an open-source license.
+Released under the [MIT License](LICENSE). Copyright (c) 2026 Jey (mj0five). The experimental status and validation limitations documented above remain applicable.
 
 ## Why version 2?
 
