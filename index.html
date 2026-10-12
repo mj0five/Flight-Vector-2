@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="data:,">
+  <title>Flight Vector 2 — محاسبات قابل ممیزی</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div>
+          <p class="eyebrow">BLACKBOX VELOCITY LAB</p>
+          <h1>Flight <em>Vector</em> <b>2</b></h1>
+          <p class="subtitle">بازسازی سرعت مرحله‌به‌مرحله، با فرمول، کد و عدم‌قطعیت</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="button ghost" id="demoButton" type="button">اجرای نمونه</button>
+        <button class="button ink" id="newButton" type="button" disabled>لاگ جدید</button>
+      </div>
+    </header>
+
+    <section class="hero-grid" id="landing">
+      <section class="dropzone" id="dropzone" tabindex="0" aria-label="بارگذاری لاگ پرواز">
+        <input id="fileInput" type="file" accept=".csv,.bbl,text/csv">
+        <div class="upload-orbit"><span>CSV</span></div>
+        <p class="eyebrow">BETAF LIGHT BLACKBOX</p>
+        <h2>فایل پرواز را اینجا رها کنید</h2>
+        <p>CSV رمزگشایی‌شده برای تحلیل کامل · BBL برای بررسی سربرگ</p>
+        <label class="button green" for="fileInput">انتخاب فایل</label>
+        <small>پردازش به‌صورت محلی در مرورگر انجام می‌شود.</small>
+      </section>
+
+      <aside class="principles">
+        <p class="eyebrow">قانون نسخه دوم</p>
+        <h2>هر عدد باید مسیر اثبات داشته باشد.</h2>
+        <ol>
+          <li><span>01</span><div><b>واحد واقعی لاگ</b><small>استفاده از acc_1G و زمان ثبت‌شده</small></div></li>
+          <li><span>02</span><div><b>محاسبه برداری</b><small>چرخش، حذف گرانش و انتگرال علامت‌دار</small></div></li>
+          <li><span>03</span><div><b>قید و اعتبار</b><small>توقف رکورد سرعت پس از خروج از کنترل</small></div></li>
+          <li><span>04</span><div><b>عدم‌قطعیت اجباری</b><small>هیچ سرعت IMU-only بدون بازه حساسیت نیست</small></div></li>
+        </ol>
+      </aside>
+    </section>
+
+    <section class="notice hidden" id="notice" role="status"></section>
+
+    <section class="workspace hidden" id="workspace">
+      <section class="filebar">
+        <div class="file-ident">
+          <span class="status-dot"></span>
+          <div><b id="fileName">flight.csv</b><small id="fileDetails">—</small></div>
+        </div>
+        <div class="file-actions">
+          <button class="button ghost" id="jsonButton" type="button">داده محاسبات JSON</button>
+          <button class="button green" id="reportButton" type="button">گزارش PDF / چاپ</button>
+        </div>
+      </section>
+
+      <section class="summary-grid">
+        <article class="metric primary">
+          <div class="metric-head"><span>قله پایدار یک‌ثانیه‌ای</span><i id="confidenceBadge">کم‌اعتماد</i></div>
+          <strong id="sustainedSpeed">—</strong>
+          <small id="sustainedTime">—</small>
+          <div class="range" id="speedRange">عدم‌قطعیت در حال محاسبه</div>
+        </article>
+        <article class="metric">
+          <span>قله نمونه‌ای IMU</span>
+          <strong id="sampleSpeed">—</strong>
+          <small id="sampleTime">—</small>
+        </article>
+        <article class="metric">
+          <span>قله افقی</span>
+          <strong id="horizontalSpeed">—</strong>
+          <small>بدون مرجع مستقل GPS</small>
+        </article>
+        <article class="metric">
+          <span>ارتفاع بارومتری</span>
+          <strong id="peakHeight">—</strong>
+          <small>نسبت به بازه کالیبراسیون</small>
+        </article>
+      </section>
+
+      <section class="audit-banner" id="auditBanner">
+        <div><span class="shield">✓</span><div><b>زنجیره محاسبه کامل اجرا شد</b><small id="validityText">—</small></div></div>
+        <button class="link-button" id="settingsButton" type="button">تنظیم فرض‌ها</button>
+      </section>
+
+      <section class="panel pipeline-panel">
+        <div class="section-head">
+          <div><p class="eyebrow">CALCULATION PIPELINE</p><h2>مسیر محاسبه قابل ممیزی</h2></div>
+          <p>روی هر مرحله بزنید تا فرمول، کد، دلیل انتخاب و خروجی واقعی همان فایل دیده شود.</p>
+        </div>
+        <div class="pipeline" id="pipeline"></div>
+        <article class="stage-detail" id="stageDetail">
+          <div class="detail-title"><span id="stageNumber">01</span><div><p class="eyebrow">SELECTED STAGE</p><h3 id="stageTitle">پارسر، زمان و واحد</h3></div></div>
+          <div class="detail-grid">
+            <div><label>فرمول اجراشده</label><code id="stageFormula" dir="ltr">—</code></div>
+            <div><label>فرمول کدنویسی‌شده</label><pre id="stageCode" dir="ltr">—</pre></div>
+            <div class="reason"><label>چرا این فرمول؟</label><p id="stageReason">—</p></div>
+            <div class="io"><div><label>ورودی</label><p id="stageInput">—</p></div><div><label>خروجی این لاگ</label><p id="stageOutput">—</p></div></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel trace-panel">
+        <div class="section-head chart-head">
+          <div><p class="eyebrow">FLIGHT TRACE</p><h2>رد زمانی محاسبات</h2></div>
+          <div class="segmented" id="chartTabs">
+            <button class="active" data-mode="speed" type="button">سرعت</button>
+            <button data-mode="acceleration" type="button">شتاب</button>
+            <button data-mode="uncertainty" type="button">عدم‌قطعیت</button>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart"></canvas><div class="tooltip hidden" id="chartTooltip"></div></div>
+        <div class="chart-legend" id="chartLegend"></div>
+        <div class="axis-row"><span>0:00</span><span id="chartEnd">—</span></div>
+      </section>
+
+      <section class="diagnostic-grid">
+        <section class="panel">
+          <div class="section-head compact"><div><p class="eyebrow">CALIBRATION</p><h2>اثر انگشت سنسور</h2></div></div>
+          <div class="axis-table" id="biasTable"></div>
+        </section>
+        <section class="panel">
+          <div class="section-head compact"><div><p class="eyebrow">VALIDITY</p><h2>گیت‌های دفاع‌پذیری</h2></div></div>
+          <div class="checks" id="validityChecks"></div>
+        </section>
+        <section class="panel warning-panel">
+          <div class="section-head compact"><div><p class="eyebrow">WHY MACH 1 HAPPENED</p><h2>رد فرمول قدیمی</h2></div></div>
+          <div class="wrong-number"><span id="wrongSpeed">—</span><small>خروجی فرمول اسکالر نادرست</small></div>
+          <code dir="ltr">wrongSpeed += max(||fᵇ|| − g, 0) · Δt</code>
+          <p>این مقدار هرگز با ترمزگیری کم نمی‌شود؛ لرزش، شتاب و ضربه همگی به آن اضافه می‌شوند.</p>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="settingsDialog">
+    <form method="dialog" id="settingsForm">
+      <div class="dialog-head"><div><p class="eyebrow">ASSUMPTIONS</p><h2>تنظیم محاسبات</h2></div><button class="icon-button" value="cancel" aria-label="بستن">×</button></div>
+      <p class="dialog-note">هر تغییر در گزارش ثبت می‌شود. مقدارها را برای نزدیک‌کردن نتیجه به سرعت مورد انتظار تنظیم نکنید.</p>
+      <div class="form-grid">
+        <label>شروع کالیبراسیون (s)<input id="calStart" type="number" step="0.01" value="0.10"></label>
+        <label>پایان کالیبراسیون (s)<input id="calEnd" type="number" step="0.01" value="2.30"></label>
+        <label>فیلتر پایین‌گذر (Hz)<input id="cutoff" type="number" step="1" min="0" value="0"><small>صفر یعنی استفاده مستقیم از accSmooth</small></label>
+        <label>پایان بازه عملکرد (s)<input id="performanceEnd" type="number" step="0.001" min="0" placeholder="خودکار"></label>
+        <label>خطای نگرش یک‌سیگما (°)<input id="tiltSigma" type="number" step="0.1" min="0" value="1.0"></label>
+        <label>نویز بارومتر (m)<input id="baroSigma" type="number" step="0.1" min="0.5" value="2.5"></label>
+        <label>جایگزین acc_1G<input id="acc1G" type="number" step="1" min="1" placeholder="از متادیتا"></label>
+      </div>
+      <div class="dialog-actions"><button class="button ghost" value="cancel">انصراف</button><button class="button green" id="recalculateButton" value="default">محاسبه مجدد</button></div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
